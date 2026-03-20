@@ -1,0 +1,22 @@
+From c60ccd9039afd7753445a84386f343a77ecc2dac Mon Sep 17 00:00:00 2001
+From: Chen Minqiang <ptpt52@gmail.com>
+Date: Mon, 11 Aug 2025 04:51:10 +0800
+Subject: [PATCH] rust: llvm.download-ci-llvm set to false
+
+---
+ lang/rust/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/feeds/packages/lang/rust/Makefile b/feeds/packages/lang/rust/Makefile
+index 717b15d46e..220a14f2e2 100644
+--- a/feeds/packages/lang/rust/Makefile
++++ b/feeds/packages/lang/rust/Makefile
+@@ -75,7 +75,7 @@ HOST_CONFIGURE_ARGS = \
+ 	--release-channel=stable \
+ 	--enable-cargo-native-static \
+ 	--bootstrap-cache-path=$(DL_DIR)/rustc \
+-	--set=llvm.download-ci-llvm=true \
++	--set=llvm.download-ci-llvm=false \
+ 	$(TARGET_CONFIGURE_ARGS)
+ 
+ define Host/Uninstall
