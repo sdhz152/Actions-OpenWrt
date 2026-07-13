@@ -147,6 +147,9 @@ jobs:
           git_clone_retry https://github.com/sbwml/v2ray-geodata.git master package/v2ray-geodata
           git_clone_retry https://github.com/sdhz151/openwrt-app.git main package/app
           git_clone_retry https://github.com/fw876/helloworld.git dev package/helloworld
+          sed -i '/PKG_MIRROR_HASH:=/d' package/helloworld/shadowsocks-libev/Makefile
+          sed -i '/PKG_SOURCE_VERSION:=/a PKG_MIRROR_HASH:=skip' package/helloworld/shadowsocks-libev/Makefile
+
           # 移除冲突的官方包
           if [ -d "feeds/packages/net/v2ray-geodata" ]; then
             rm -rf feeds/packages/net/v2ray-geodata
