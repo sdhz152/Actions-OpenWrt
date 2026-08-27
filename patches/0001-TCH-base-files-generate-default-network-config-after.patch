@@ -1,0 +1,49 @@
+From 5260bf1b85ba9af4762af56e4b1c0804f5a2487b Mon Sep 17 00:00:00 2001
+From: sdhz150 <xxxxxxxx27004@gmail.com>
+Date: Sun, 9 Aug 2026 11:11:01 +0800
+Subject: [PATCH] TCH] base-files: "generate default network config after
+ kmodloader"
+
+---
+ package/base-files/files/etc/init.d/boot               | 11 ++++++++++
+ .../base-files/files/lib/preinit/82_config_generate    |  2 +-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/package/base-files/files/etc/init.d/boot b/package/base-files/files/etc/init.d/boot
+index 174fead3ec..0210397846 100755
+--- a/package/base-files/files/etc/init.d/boot
++++ b/package/base-files/files/etc/init.d/boot
+@@ -49,6 +49,17 @@ boot() {
+ 
+ 	/sbin/kmodloader
+ 
++	[ -f /tmp/config_pending ] && {
++		# 仅在 network 配置文件不存在或为空时才重新生成，避免覆盖用户已有配置
++		if [ ! -s /etc/config/network ]; then
++			/bin/board_detect /tmp/board.json && {
++				mv /tmp/board.json /etc/board.json
++				/bin/config_generate > /dev/null
++			}
++		fi
++		rm -f /tmp/config_pending
++	}
++
+ 	uci_apply_defaults
+ 	sync
+ 
+diff --git a/package/base-files/files/lib/preinit/82_config_generate b/package/base-files/files/lib/preinit/82_config_generate
+index e40448d10f..413c46193c 100644
+--- a/package/base-files/files/lib/preinit/82_config_generate
++++ b/package/base-files/files/lib/preinit/82_config_generate
+@@ -8,7 +8,7 @@ do_config_generate() {
+ 		/bin/board_detect /tmp/board.json
+ 		mv /tmp/board.json /etc/board.json
+ 
+-		/bin/config_generate > /dev/null
++		touch /tmp/config_pending
+ 	}
+ }
+ 
+-- 
+2.55.0
+
