@@ -30,7 +30,7 @@ else if [[ $REPO_URL = *"x-wrt"* ]]; then
    echo "diy-part2扩展自定义第二项设置完成"
    echo "============================="
 
-else if [[ $REPO_URL = *"openwrt"* && $REPO_BRANCH = "openwrt-25.12" ]] || [[ $REPO_URL = *"openwrt"* && $REPO_BRANCH = "main" ]]; then
+else if [[ $REPO_URL = *"openwrt"* && $REPO_BRANCH = "openwrt-25.12" ]] || [[ $REPO_URL = *"openwrt"* && $REPO_BRANCH = "master" ]]; then
    sed -i 's/192.168.1.1/192.168.2.1/g' package/base-files/files/bin/config_generate
    sed -i "s/timezone='GMT0'/timezone='CST-8'/" package/base-files/files/bin/config_generate
    sed -i "s/zonename='UTC'/zonename='Asia\/Shanghai'/" package/base-files/files/bin/config_generate
