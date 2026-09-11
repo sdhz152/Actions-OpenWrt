@@ -173,34 +173,6 @@ jobs:
           echo "🔧 冗余目录清理完成"
           echo "STEP: Process package soft links completed — $(date +%Y-%m-%d\ %H:%M:%S)"
 
-      # 步骤9.5：更新golang（openwrt-25.12稳定版）
-      - name: 更新golang（openwrt-25.12稳定版）
-        run: |
-          set -euo pipefail
-          cd openwrt
-          mkdir -p package/golang
-          cd package/golang
-          git init
-          git remote add origin https://github.com/openwrt/packages.git
-          git config core.sparsecheckout true
-          echo "lang/golang" >> .git/info/sparse-checkout
-          git pull --depth 1 origin openwrt-25.12
-          echo "🔧 golang包克隆完成"
-          echo "STEP: update golang completed — $(date +%Y-%m-%d\ %H:%M:%S)"
-
-      # 替换官方golang为最新版，避免编译冲突
-      - name: 软连接golang（openwrt-25.12稳定版）
-        run: |
-          set -euo pipefail
-          cd openwrt
-          rm -rf feeds/packages/lang/golang/*
-          cp -r package/golang/lang/golang/* feeds/packages/lang/golang
-          rm -rf package/golang
-          mkdir -p package/feeds/packages
-          ln -sf ../../../feeds/packages/lang/golang/golang package/feeds/packages/golang
-          ln -sf ../../../feeds/packages/lang/golang/golang1.26 package/feeds/packages/golang1.26
-          ln -sf ../../../feeds/packages/lang/golang/golang-bootstrap package/feeds/packages/golang-bootstrap
-
       # 步骤10：安装所有OpenWrt Feeds软件包（官方）
       - name: 安装所有OpenWrt Feeds软件包
         run: |
