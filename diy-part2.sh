@@ -59,15 +59,41 @@ fi
 # 添加编译日期
 sed -i 's/IMG_PREFIX:=/IMG_PREFIX:=$(BUILD_DATE_PREFIX)-/g' ./include/image.mk
 sed -i '/DTS_DIR:=$(LINUX_DIR)/a\BUILD_DATE_PREFIX := $(shell date +'%F')' ./include/image.mk
-if [[ "$REPO_URL" != *"x-wrt"* ]]; then
-    echo 'net.core.default_qdisc=fq' >> package/base-files/files/etc/sysctl.conf
-    echo 'net.ipv4.tcp_congestion_control=bbr' >> package/base-files/files/etc/sysctl.conf
-    echo "已成功写入 BBR 配置"
-fi
 
 if ls $GITHUB_WORKSPACE/patches/0001-TCH-base-files-generate-default-network-config-after.patch 1> /dev/null 2>&1; then
 	git apply --quiet $GITHUB_WORKSPACE/patches/0001-TCH-base-files-generate-default-network-config-after.patch
     echo "✅ 已成功添加  0001-TCH-base-files-generate-default-network-config-after.patch补丁"
 else
     echo "⚠️ 警告：在 $GITHUB_WORKSPACE/patches/ 下未找到 0001-TCH-base-files-generate-default-network-config-after.patch 补丁文件！"
+fi
+
+if [[ $CACHE_TRADEMARK != *"AC2100-helloworld"* ]]; then
+# 检查并批量复制所有 BBR3 补丁
+if ls $GITHUB_WORKSPACE/patches/900-bbr3.patch 1> /dev/null 2>&1; then
+    mkdir -p target/linux/generic/hack-6.18
+    cp $GITHUB_WORKSPACE/patches/900-bbr3.patch target/linux/generic/hack-6.18/
+    echo "✅ 已成功添加  BBR3 内核补丁到 target/linux/generic/hack-6.18/"
+else
+    echo "⚠️ 警告：在 $GITHUB_WORKSPACE/patches/ 下未找到 900-bbr3.patch 补丁文件！"
+fi
+# 写入 BBR 配置
+if [[ "$REPO_URL" != *"x-wrt"* ]]; then
+    echo 'net.core.default_qdisc=fq' >> package/base-files/files/etc/sysctl.conf
+    echo 'net.ipv4.tcp_congestion_control=bbr' >> package/base-files/files/etc/sysctl.conf
+    echo "已成功写入 BBR 配置"
+fi
+
+# 1. 精准删除禁用声明与旧的默认算法配置
+sed -i '/# CONFIG_NET_SCH_FQ is not set$/d' target/linux/generic/config-6.18
+sed -i '/# CONFIG_TCP_CONG_BBR is not set$/d' target/linux/generic/config-6.18
+sed -i '/CONFIG_DEFAULT_TCP_CONG/d' target/linux/generic/config-6.18
+
+# 2. 写入开启配置
+cat <<EOF >> target/linux/generic/config-6.18
+CONFIG_NET_SCH_FQ=y
+CONFIG_TCP_CONG_BBR=y
+CONFIG_DEFAULT_TCP_CONG="bbr"
+CONFIG_DEFAULT_BBR=y
+EOF
+echo "已成功写入开启配置"
 fi
