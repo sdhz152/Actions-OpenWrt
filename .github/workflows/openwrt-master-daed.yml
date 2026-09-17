@@ -140,15 +140,6 @@ jobs:
           }
           # 克隆各核心功能插件
           git_clone_retry https://github.com/sdhz151/openwrt-app.git main package/app
-          git_clone_retry https://github.com/kenzok8/openwrt-daede.git main package/daed
-          echo "🔧 修改Makefile版本"
-          sed -i \
-          -e 's/^PKG_VERSION:=.*/PKG_VERSION:=2026.09.16/' \
-          -e 's/^PKG_RELEASE:=.*/PKG_RELEASE:=1/' \
-          -e 's/^PKG_HASH:=.*/PKG_HASH:=skip/' \
-          -e 's/^PKG_SOURCE:=.*/PKG_SOURCE:=daed-src-2026.09.16-50e94b053a70.tar.gz/' \
-          package/daed/daed/Makefile
-          echo "✅ 修改daed/Makefile版本完成"
 
       # 步骤9：处理插件软链接/目录结构+清理冗余文件
       - name: 处理插件软链接/目录结构（适配编译规则）
@@ -165,33 +156,81 @@ jobs:
           echo "🔧 冗余目录清理完成"
           echo "STEP: Process package soft links completed — $(date +%Y-%m-%d\ %H:%M:%S)"
 
-      # 步骤9.5：更新golang（openwrt-25.12稳定版）
-      - name: 更新golang（openwrt-25.12稳定版）
+      # 步骤9.5：下载daed
+      - name: 下载daed
         run: |
           set -euo pipefail
           cd openwrt
-          mkdir -p package/golang
-          cd package/golang
+          mkdir -p package/daed
+          cd package/daed
           git init
-          git remote add origin https://github.com/openwrt/packages.git
+          git remote add origin https://github.com/immortalwrt/luci.git
           git config core.sparsecheckout true
-          echo "lang/golang" >> .git/info/sparse-checkout
-          git pull --depth 1 origin openwrt-25.12
-          echo "🔧 golang包克隆完成"
-          echo "STEP: update golang completed — $(date +%Y-%m-%d\ %H:%M:%S)"
+          echo "applications/luci-app-daed" >> .git/info/sparse-checkout
+          git pull --depth 1 origin master
+          echo "🔧 daed包克隆完成"
+          echo "STEP: update daed completed — $(date +%Y-%m-%d\ %H:%M:%S)"
 
-      # 替换官方golang为最新版，避免编译冲突
-      - name: 软连接golang（openwrt-25.12稳定版）
+      # 步骤9.6：下载dae
+      - name: 下载dae
         run: |
           set -euo pipefail
           cd openwrt
-          rm -rf feeds/packages/lang/golang/*
-          cp -r package/golang/lang/golang/* feeds/packages/lang/golang
-          rm -rf package/golang
-          mkdir -p package/feeds/packages
-          ln -sf ../../../feeds/packages/lang/golang/golang package/feeds/packages/golang
-          ln -sf ../../../feeds/packages/lang/golang/golang1.26 package/feeds/packages/golang1.26
-          ln -sf ../../../feeds/packages/lang/golang/golang-bootstrap package/feeds/packages/golang-bootstrap
+          mkdir -p package/dae
+          cd package/dae
+          git init
+          git remote add origin https://github.com/immortalwrt/luci.git
+          git config core.sparsecheckout true
+          echo "applications/luci-app-dae" >> .git/info/sparse-checkout
+          git pull --depth 1 origin master
+          echo "🔧 daed包克隆完成"
+          echo "STEP: update dae completed — $(date +%Y-%m-%d\ %H:%M:%S)"
+
+      # 步骤9.7：下载daed
+      - name: 下载daed
+        run: |
+          set -euo pipefail
+          cd openwrt
+          mkdir -p feeds/packages/net/daed
+          cd feeds/packages/net/daed
+          git init
+          git remote add origin https://github.com/immortalwrt/packages.git
+          git config core.sparsecheckout true
+          echo "net/daed" >> .git/info/sparse-checkout
+          git pull --depth 1 origin master
+          cp -r net/daed/* ./
+          rm -rf net .git
+          echo "🔧 daed包克隆完成"
+          echo "STEP: update daed completed — $(date +%Y-%m-%d\ %H:%M:%S)"
+
+      # 步骤9.8：下载daed
+      - name: 下载daed
+        run: |
+          set -euo pipefail
+          cd openwrt
+          mkdir -p feeds/packages/net/dae
+          cd feeds/packages/net/dae
+          git init
+          git remote add origin https://github.com/immortalwrt/packages.git
+          git config core.sparsecheckout true
+          echo "net/dae" >> .git/info/sparse-checkout
+          git pull --depth 1 origin master
+          cp -r net/dae/* ./
+          rm -rf net .git
+          echo "🔧 dae包克隆完成"
+          echo "STEP: update dae completed — $(date +%Y-%m-%d\ %H:%M:%S)"
+
+      # 步骤9.9：软连接
+      - name: 软连接
+        run: |
+          set -euo pipefail
+          cd openwrt
+          cp -r package/daed/applications/luci-app-daed/ feeds/luci/applications/luci-app-daed
+          rm -rf package/daed
+          ln -sf ../../../feeds/luci/applications/luci-app-daed package/feeds/luci/luci-app-daed
+          cp -r package/dae/applications/luci-app-dae/ feeds/luci/applications/luci-app-dae
+          rm -rf package/dae
+          ln -sf ../../../feeds/luci/applications/luci-app-dae package/feeds/luci/luci-app-dae
 
       # 步骤10：安装所有OpenWrt Feeds软件包（官方）
       - name: 安装所有OpenWrt Feeds软件包
