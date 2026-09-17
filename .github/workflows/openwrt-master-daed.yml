@@ -140,7 +140,15 @@ jobs:
           }
           # 克隆各核心功能插件
           git_clone_retry https://github.com/sdhz151/openwrt-app.git main package/app
-          git_clone_retry https://github.com/kenzok8/openwrt-daede.git daed-src package/daed
+          git_clone_retry https://github.com/kenzok8/openwrt-daede.git main package/daed
+          echo "🔧 修改Makefile版本"
+          sed -i \
+          -e 's/^PKG_VERSION:=.*/PKG_VERSION:=2026.09.16/' \
+          -e 's/^PKG_RELEASE:=.*/PKG_RELEASE:=1/' \
+          -e 's/^PKG_HASH:=.*/PKG_HASH:=skip/' \
+          -e 's/^PKG_SOURCE:=.*/PKG_SOURCE:=daed-src-2026.09.16-50e94b053a70.tar.gz/' \
+          package/daed/daed/Makefile
+          echo "✅ 修改daed/Makefile版本完成"
 
       # 步骤9：处理插件软链接/目录结构+清理冗余文件
       - name: 处理插件软链接/目录结构（适配编译规则）
