@@ -140,7 +140,7 @@ jobs:
           }
           # 克隆各核心功能插件
           git_clone_retry https://github.com/sdhz151/openwrt-app.git main package/app
-          git_clone_retry https://github.com/kenzok8/openwrt-daede.git main package/daed
+          git_clone_retry https://github.com/kenzok8/openwrt-daede.git daed-src package/daed
 
       # 步骤9：处理插件软链接/目录结构+清理冗余文件
       - name: 处理插件软链接/目录结构（适配编译规则）
