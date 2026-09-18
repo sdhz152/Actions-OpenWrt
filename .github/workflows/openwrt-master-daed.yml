@@ -161,7 +161,7 @@ jobs:
         run: |
           set -euo pipefail
           cd openwrt
-          git clone -b openwrt-25.12 --depth 1 --filter=blob:none --sparse https://github.com/coolsnowwolf/luci.git package/daed
+          git clone -b master --depth 1 --filter=blob:none --sparse https://github.com/immortalwrt/luci.git package/daed
           cd package/daed
           git sparse-checkout set applications/luci-app-daed
           cd ../../
@@ -171,12 +171,12 @@ jobs:
           ln -sf ../../../feeds/luci/applications/luci-app-daed package/feeds/luci/luci-app-daed
           echo "🔧 luci-app-daed插件处理完成"
 
-      # 步骤9.5：下载daed
+      # 步骤9.6：下载daed
       - name: 下载daed
         run: |
           set -euo pipefail
           cd openwrt
-          git clone -b master --depth 1 --filter=blob:none --sparse https://github.com/coolsnowwolf/packages.git package/daea
+          git clone -b master --depth 1 --filter=blob:none --sparse https://github.com/immortalwrt/packages.git package/daea
           cd package/daea
           git sparse-checkout set net/daed
           cd ../../
