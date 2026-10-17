@@ -143,6 +143,7 @@ jobs:
           git_clone_retry https://github.com/sbwml/v2ray-geodata.git master package/v2ray-geodata
           git_clone_retry https://github.com/sdhz151/openwrt-app.git main package/app
           git_clone_retry https://github.com/immortalwrt/homeproxy.git master package/homeproxy
+          sed -i 's/+sing-box/+sing-box-standard/g' package/homeproxy/Makefile
 
           # 移除冲突的官方包
           if [ -d "feeds/packages/net/v2ray-geodata" ]; then
