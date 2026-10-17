@@ -264,7 +264,7 @@ jobs:
           # 开启homeproxy插件，写入.config配置文件，编译系统自动识别
           echo "CONFIG_PACKAGE_luci-app-homeproxy=y" >> .config
           echo "CONFIG_PACKAGE_luci-i18n-homeproxy-zh-cn=y" >> .config
-          echo "CONFIG_PACKAGE_sing-box=y" >> .config
+          echo "CONFIG_PACKAGE_sing-box-standard=y" >> .config
           echo "CONFIG_PACKAGE_sing-box-tiny=m" >> .config
           # 再次补全配置，确保新增项生效
           make defconfig >/dev/null 2>&1
