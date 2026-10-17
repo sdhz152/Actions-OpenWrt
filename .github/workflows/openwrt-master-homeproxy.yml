@@ -143,7 +143,7 @@ jobs:
           git_clone_retry https://github.com/sbwml/v2ray-geodata.git master package/v2ray-geodata
           git_clone_retry https://github.com/sdhz151/openwrt-app.git main package/app
           git_clone_retry https://github.com/immortalwrt/homeproxy.git master package/homeproxy
-          sed -i 's/+sing-box/+sing-box-standard/g' package/homeproxy/Makefile
+          sed -i 's/+sing-box/+sing-box-tiny/g' package/homeproxy/Makefile
 
           # 移除冲突的官方包
           if [ -d "feeds/packages/net/v2ray-geodata" ]; then
@@ -265,8 +265,8 @@ jobs:
           # 开启homeproxy插件，写入.config配置文件，编译系统自动识别
           echo "CONFIG_PACKAGE_luci-app-homeproxy=y" >> .config
           echo "CONFIG_PACKAGE_luci-i18n-homeproxy-zh-cn=y" >> .config
-          echo "CONFIG_PACKAGE_sing-box-standard=y" >> .config
-          echo "CONFIG_PACKAGE_sing-box-tiny=m" >> .config
+          echo "# CONFIG_PACKAGE_sing-box is not set" >> .config
+          echo "CONFIG_PACKAGE_sing-box-tiny=y" >> .config
           # 再次补全配置，确保新增项生效
           make defconfig >/dev/null 2>&1
           echo "🔧 固件配置加载&优化补丁应用完成，核心插件已强制开启"
