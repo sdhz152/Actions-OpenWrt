@@ -60,12 +60,12 @@ fi
 sed -i 's/IMG_PREFIX:=/IMG_PREFIX:=$(BUILD_DATE_PREFIX)-/g' ./include/image.mk
 sed -i '/DTS_DIR:=$(LINUX_DIR)/a\BUILD_DATE_PREFIX := $(shell date +'%F')' ./include/image.mk
 
-if ls $GITHUB_WORKSPACE/patches/0001-TCH-base-files-generate-default-network-config-after.patch 1> /dev/null 2>&1; then
-	git apply --quiet $GITHUB_WORKSPACE/patches/0001-TCH-base-files-generate-default-network-config-after.patch
-    echo "✅ 已成功添加  0001-TCH-base-files-generate-default-network-config-after.patch补丁"
-else
-    echo "⚠️ 警告：在 $GITHUB_WORKSPACE/patches/ 下未找到 0001-TCH-base-files-generate-default-network-config-after.patch 补丁文件！"
-fi
+#if ls $GITHUB_WORKSPACE/patches/0001-TCH-base-files-generate-default-network-config-after.patch 1> /dev/null 2>&1; then
+#	git apply --quiet $GITHUB_WORKSPACE/patches/0001-TCH-base-files-generate-default-network-config-after.patch
+#    echo "✅ 已成功添加  0001-TCH-base-files-generate-default-network-config-after.patch补丁"
+#else
+#    echo "⚠️ 警告：在 $GITHUB_WORKSPACE/patches/ 下未找到 0001-TCH-base-files-generate-default-network-config-after.patch 补丁文件！"
+#fi
 
 if [[ $CACHE_TRADEMARK != *"AC2100-helloworld"* ]]; then
 # 检查并批量复制所有 BBR3 补丁

@@ -142,8 +142,6 @@ jobs:
           git_clone_retry https://github.com/sbwml/luci-app-mosdns.git v5 package/mosdns
           git_clone_retry https://github.com/sbwml/v2ray-geodata.git master package/v2ray-geodata
           git_clone_retry https://github.com/sdhz151/openwrt-app.git main package/app
-          git_clone_retry https://github.com/immortalwrt/homeproxy.git master package/homeproxy
-          # sed -i 's/+sing-box/+sing-box-tiny/g' package/homeproxy/Makefile
 
           # 移除冲突的官方包
           if [ -d "feeds/packages/net/v2ray-geodata" ]; then
@@ -166,6 +164,40 @@ jobs:
           echo "🔧 sing-box包克隆完成"
           echo "STEP: update sing-box completed — $(date +%Y-%m-%d\ %H:%M:%S)"
 
+      # 步骤8.6：安装homeproxy插件（immortalwrt最新版，避免版本冲突）
+      - name: 安装homeproxy插件（immortalwrt最新版）
+        run: |
+          set -euo pipefail
+          cd openwrt
+          mkdir -p feeds/luci/applications/luci-app-homeproxy
+          cd feeds/luci/applications/luci-app-homeproxy
+          git init
+          git remote add origin https://github.com/immortalwrt/luci.git
+          git config core.sparsecheckout true
+          echo "applications/luci-app-homeproxy" >> .git/info/sparse-checkout
+          git pull --depth 1 origin master
+          mv applications/luci-app-homeproxy/* ./
+          rm -rf .git/ applications/
+          echo "🔧 homeproxy包克隆完成"
+          echo "STEP: update homeproxy completed — $(date +%Y-%m-%d\ %H:%M:%S)"
+
+      # 步骤8.7：安装libcronet插件（immortalwrt最新版，避免版本冲突）
+      - name: 安装libcronet插件（immortalwrt最新版）
+        run: |
+          set -euo pipefail
+          cd openwrt
+          mkdir -p feeds/packages/libs/libcronet
+          cd feeds/packages/libs/libcronet
+          git init
+          git remote add origin https://github.com/immortalwrt/packages.git
+          git config core.sparsecheckout true
+          echo "libs/libcronet" >> .git/info/sparse-checkout
+          git pull --depth 1 origin master
+          mv libs/libcronet/* ./
+          rm -rf .git/ libs/
+          echo "🔧 libcronet包克隆完成"
+          echo "STEP: update libcronet completed — $(date +%Y-%m-%d\ %H:%M:%S)"
+
       # 步骤9：处理插件软链接/目录结构+清理冗余文件
       - name: 处理插件软链接/目录结构（适配编译规则）
         id: process-softlink
@@ -176,11 +208,14 @@ jobs:
           [ -d "package/app/vlmcsd" ] && mv package/app/vlmcsd package/
           [ -d "package/app/luci-app-vlmcsd" ] && mv package/app/luci-app-vlmcsd feeds/luci/applications/
           mkdir -p package/feeds/luci
+          mkdir -p package/feeds/packages
           ln -sf ../../../feeds/luci/applications/luci-app-vlmcsd package/feeds/luci/luci-app-vlmcsd
+          ln -sf ../../../feeds/luci/applications/luci-app-homeproxy package/feeds/luci/luci-app-homeproxy
           # 替换官方sing-box为最新版，避免编译冲突
           rm -rf feeds/packages/net/sing-box/*
           rsync -a package/singbox/net/sing-box/* feeds/packages/net/sing-box
           rm -rf package/singbox
+          ln -sf ../../../feeds/packages/libs/libcronet package/feeds/packages/libcronet
           # 清理冗余目录，保持编译环境整洁
           [ -d "package/app" ] && rm -rf package/app
           echo "🔧 插件软链接处理完成"
@@ -265,8 +300,8 @@ jobs:
           # 开启homeproxy插件，写入.config配置文件，编译系统自动识别
           echo "CONFIG_PACKAGE_luci-app-homeproxy=y" >> .config
           echo "CONFIG_PACKAGE_luci-i18n-homeproxy-zh-cn=y" >> .config
-          echo "# CONFIG_PACKAGE_sing-box is not set" >> .config
-          echo "CONFIG_PACKAGE_sing-box-tiny=y" >> .config
+          echo "CONFIG_PACKAGE_sing-box=y" >> .config
+          # echo "# CONFIG_PACKAGE_sing-box-tiny=n" >> .config
           # 再次补全配置，确保新增项生效
           make defconfig >/dev/null 2>&1
           echo "🔧 固件配置加载&优化补丁应用完成，核心插件已强制开启"
