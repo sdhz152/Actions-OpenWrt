@@ -256,10 +256,10 @@ jobs:
           # 开启v2rayA插件
           echo 'CONFIG_PACKAGE_kmod-nf-tproxy=y' >>.config
           echo 'CONFIG_PACKAGE_kmod-nft-tproxy=y' >>.config
-          echo 'CONFIG_PACKAGE_luci-app-v2raya=y' >>.config
-          echo 'CONFIG_PACKAGE_luci-i18n-v2raya-zh-cn=y' >>.config
-          echo 'CONFIG_PACKAGE_v2raya=y' >>.config
-          echo 'CONFIG_PACKAGE_xray-core=y' >>.config
+          # echo 'CONFIG_PACKAGE_luci-app-v2raya=y' >>.config
+          # echo 'CONFIG_PACKAGE_luci-i18n-v2raya-zh-cn=y' >>.config
+          # echo 'CONFIG_PACKAGE_v2raya=y' >>.config
+          # echo 'CONFIG_PACKAGE_xray-core=y' >>.config
           # 再次补全配置，确保新增项生效
           make defconfig >/dev/null 2>&1
           echo "🔧 固件配置加载&优化补丁应用完成，核心插件已强制开启"
