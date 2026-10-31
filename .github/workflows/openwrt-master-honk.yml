@@ -1,6 +1,6 @@
 # Copyright (c) 2019-2020 P3TERX <https://p3terx.com>
 # 协议声明：MIT开源协议，自由使用/修改，需保留原版权声明
-name: openwrt-25.12-honk
+name: openwrt-master-honk
 
 # 工作流触发方式：手动触发(核心)+定时触发+仓库事件触发
 on:
@@ -17,7 +17,7 @@ on:
 # 全局环境变量：统一管理，一键修改
 env:
   REPO_URL: https://github.com/openwrt/openwrt.git
-  REPO_BRANCH: openwrt-25.12
+  REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: config/x86/config.buildinfo
   CONFIG_URL: https://raw.githubusercontent.com/sdhz152/Actions-OpenWrt/refs/heads/main/config/x86/config.buildinfo
