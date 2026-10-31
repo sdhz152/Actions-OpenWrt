@@ -143,6 +143,7 @@ jobs:
           git_clone_retry https://github.com/daeuniverse/openwrt-packages.git main package/honk
           git clone --recurse-submodules --branch v2.1.1 https://github.com/daeuniverse/dae package/honk/dae/src
           git clone --branch v0.1.0-beta.4 https://github.com/daeuniverse/honk package/honk/honk/src
+          sed -i '/echo "honk: building honk-core"/a \  rustup target add "${target}"' package/honk/honk/build.sh
 
       # 步骤10：安装所有OpenWrt Feeds软件包（官方）
       - name: 安装所有OpenWrt Feeds软件包
