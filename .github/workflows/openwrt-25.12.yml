@@ -222,8 +222,6 @@ jobs:
           cd openwrt
           $GITHUB_WORKSPACE/$DIY_P2_SH
           echo "🔧DIY_P2_SH输出完成"
-          git apply --quiet $GITHUB_WORKSPACE/patches/v2ray-geodata-xray.patch
-          echo "🔧v2ray-geodata修改完成"
           # 强制开启核心插件，无需手动在.config中配置
           cat >> .config << EOF
           CONFIG_PACKAGE_luci-app-v2raya=y
