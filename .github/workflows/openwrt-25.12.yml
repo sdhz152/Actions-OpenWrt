@@ -140,7 +140,7 @@ jobs:
           }
           # 克隆各核心功能插件
           git_clone_retry https://github.com/sbwml/luci-app-mosdns.git v5 package/mosdns
-	  git_clone_retry https://github.com/sdhz151/geodata.git main package/geodata
+          git_clone_retry https://github.com/sdhz151/geodata.git main package/geodata
 
           # 移除冲突的官方包
           if [ -d "feeds/packages/net/v2ray-geodata" ]; then
