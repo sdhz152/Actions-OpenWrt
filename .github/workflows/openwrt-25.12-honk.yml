@@ -24,6 +24,7 @@ env:
   OFFICIAL_CONFIG_URL: https://raw.githubusercontent.com/sdhz152/Actions-OpenWrt/refs/heads/main/config/x86/config.buildinfo
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
+  DIY_P3_SH: dae-packages.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
   UPLOAD_COWTRANSFER: false
@@ -249,8 +250,8 @@ jobs:
           chmod +x $DIY_P2_SH
           cd openwrt
           $GITHUB_WORKSPACE/$DIY_P2_SH
-          chmod +x dae-packages.sh
-          $GITHUB_WORKSPACE/dae-packages.sh
+          chmod +x $DIY_P3_SH 
+          $GITHUB_WORKSPACE/$DIY_P3_SH
 
           # --- eBPF & BTF 内核底层支持 ---
           echo 'CONFIG_DEVEL=y' >>.config
