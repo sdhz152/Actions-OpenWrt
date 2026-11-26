@@ -97,6 +97,18 @@ export PATH="$CARGO_HOME/bin:$PATH"
 export stable="1.99.1"
 EOF
 source "$HOME/.bashrc"
+
+# 导出环境变量给 GitHub Actions 后续的 Step
+if [ -n "${GITHUB_PATH:-}" ]; then
+  echo "/usr/local/go/bin" >> "$GITHUB_PATH"
+  echo "$CARGO_HOME/bin" >> "$GITHUB_PATH"
+fi
+
+if [ -n "${GITHUB_ENV:-}" ]; then
+  echo "CARGO_HOME=$CARGO_HOME" >> "$GITHUB_ENV"
+  echo "RUSTUP_HOME=$RUSTUP_HOME" >> "$GITHUB_ENV"
+fi
+
 # 8. 验证
 go version
 rustup --version
