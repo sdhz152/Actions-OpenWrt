@@ -60,63 +60,93 @@ fi
 sed -i 's/IMG_PREFIX:=/IMG_PREFIX:=$(BUILD_DATE_PREFIX)-/g' ./include/image.mk
 sed -i '/DTS_DIR:=$(LINUX_DIR)/a\BUILD_DATE_PREFIX := $(shell date +'%F')' ./include/image.mk
 if [[ "$CACHE_TRADEMARK" = "honk" ]]; then
-# 1. 提前设置当前会话环境变量与固定版本
-export CARGO_HOME="$HOME/.cargo"
-export RUSTUP_HOME="$HOME/.rustup"
-export PATH="$CARGO_HOME/bin:$PATH"
-export stable="1.99.1"
+## dae/honk
+rm -rf feeds/luci/applications/luci-app-dae \
+       feeds/luci/applications/luci-app-honk \
+       feeds/packages/net/dae \
+       feeds/packages/net/honk
 
-# 3. 安装 rustup
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-  | sh -s -- -y --profile minimal --default-toolchain none --no-modify-path
-
-# 4. 安装 1.99.1 工具链、设为默认并添加 x86_64 目标
-rustup toolchain install "$stable" --profile minimal --component rustfmt,clippy
-rustup default "$stable"
-rustup target add --toolchain "$stable" x86_64-unknown-linux-gnu x86_64-unknown-linux-musl
-
-# 5. 安装 eBPF 所需的 nightly 工具链及组件
-nightly="$(python3 -c 'import sys,tomllib;print(tomllib.load(open(sys.argv[1],"rb"))["toolchain"]["channel"])' "package/dae-packages/honk/src/crates/honk-ebpf/rust-toolchain.toml")"
-rustup toolchain install "$nightly" --profile minimal --component rust-src,llvm-tools
-
-# 6. 安装 cargo-binstall 与 bpf-linker
-curl -L --proto '=https' --tlsv1.2 -sSf \
-  https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-cargo binstall -y bpf-linker
-
-# 7. 安装 go（先清理旧目录避免残留）
-wget -qnc https://go.dev/dl/go1.27.4.linux-amd64.tar.gz
-sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.27.4.linux-amd64.tar.gz
-cat <<'EOF' >> "$HOME/.bashrc"
-
-# Rust & eBPF 环境变量
-export PATH="/usr/local/go/bin:$PATH"
-export CARGO_HOME="$HOME/.cargo"
-export RUSTUP_HOME="$HOME/.rustup"
-export PATH="$CARGO_HOME/bin:$PATH"
-export stable="1.99.1"
-EOF
-source "$HOME/.bashrc"
-
-# 导出环境变量给 GitHub Actions 后续的 Step
-if [ -n "${GITHUB_PATH:-}" ]; then
-  echo "/usr/local/go/bin" >> "$GITHUB_PATH"
-  echo "$CARGO_HOME/bin" >> "$GITHUB_PATH"
+if [ -d "package/dae-packages" ]; then
+  git -C package/dae-packages pull
+  git -C package/dae-packages/dae/src pull
+  git -C package/dae-packages/honk/src pull
+else
+  git clone https://github.com/daeuniverse/openwrt-packages package/dae-packages
+  git clone --recurse-submodules https://github.com/daeuniverse/dae package/dae-packages/dae/src
+  git clone --recurse-submodules https://github.com/daeuniverse/honk package/dae-packages/honk/src
 fi
 
+(
+  set -euo pipefail
+  [[ "$(uname -s)" == Linux && "$(uname -m)" == x86_64 ]]
+
+  src="$(realpath package/dae-packages/honk/src)"
+  export CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}"
+  export RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}"
+  export PATH="$CARGO_HOME/bin:$PATH"
+
+  target_text="$(python3 - <<'PY_TARGETS' package/dae-packages/honk/build.sh
+import pathlib, re, sys
+text = pathlib.Path(sys.argv[1]).read_text()
+section = re.search(r'case[^\n]*HONK_ARCH_PACKAGES[^\n]*\bin\s*\n(.*?)\besac\b', text, re.S)
+if not section:
+    sys.exit("Cannot locate HONK_ARCH_PACKAGES mapping in build.sh")
+targets = sorted(set(re.findall(r"\btarget\s*=\s*[\"']?([A-Za-z0-9_]+(?:-[A-Za-z0-9_.]+){2,})", section.group(1))))
+if not targets:
+    sys.exit("No Rust targets found in build.sh")
+print("\n".join(targets))
+PY_TARGETS
+  )"
+  mapfile -t targets <<< "$target_text"
+
+  if ! command -v rustup >/dev/null 2>&1; then
+    installer="$(mktemp)"
+    curl --proto '=https' --tlsv1.2 -fLsS --retry 3 https://sh.rustup.rs -o "$installer"
+    sh "$installer" -y --profile minimal --default-toolchain none --no-modify-path
+    rm -f "$installer"
+  fi
+
+  stable="$(python3 - <<'PY_TOML' "$src/rust-toolchain.toml"
+import sys, tomllib
+print(tomllib.load(open(sys.argv[1], "rb"))["toolchain"]["channel"])
+PY_TOML
+  )"
+  nightly="$(python3 - <<'PY_TOML' "$src/crates/honk-ebpf/rust-toolchain.toml"
+import sys, tomllib
+print(tomllib.load(open(sys.argv[1], "rb"))["toolchain"]["channel"])
+PY_TOML
+  )"
+
+  rustup toolchain install "$stable" --profile minimal --component rustfmt,clippy
+  rustup default "$stable"
+  rustup target add --toolchain "$stable" "${targets[@]}"
+  rustup toolchain install "$nightly" --profile minimal --component rust-src,llvm-tools
+
+  source "$src/.github/ci/pins.env"
+  archive="$(mktemp --suffix=.tar.zst)"
+  curl -fLsS --retry 3 -o "$archive" \
+    "https://github.com/aya-rs/bpf-linker/releases/download/v${BPF_LINKER_VERSION}/bpf-linker-x86_64-unknown-linux-musl.tar.zst"
+  printf '%s  %s\n' "$BPF_LINKER_SHA256" "$archive" | sha256sum -c -
+  mkdir -p "$CARGO_HOME/bin"
+  tar --zstd -xf "$archive" -C "$CARGO_HOME/bin"
+  rm -f "$archive"
+
+  rustup target list --installed --toolchain "$stable"
+)
+
+# 同步到当前外层 Shell（同 step 继续跑 make 时生效）
+export CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}"
+export RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}"
+export PATH="$CARGO_HOME/bin:$PATH"
+
+# 持久化到 GitHub Actions 后续 step
 if [ -n "${GITHUB_ENV:-}" ]; then
-  echo "CARGO_HOME=$CARGO_HOME" >> "$GITHUB_ENV"
-  echo "RUSTUP_HOME=$RUSTUP_HOME" >> "$GITHUB_ENV"
+  printf 'CARGO_HOME=%s\nRUSTUP_HOME=%s\n' "$CARGO_HOME" "$RUSTUP_HOME" >> "$GITHUB_ENV"
 fi
-
-# 8. 验证
-go version
-rustup --version
-cargo --version
-rustc --version
-bpf-linker --version
-rustup target list --installed --toolchain "$stable"
-echo "安装完成"
+if [ -n "${GITHUB_PATH:-}" ]; then
+  printf '%s\n' "$CARGO_HOME/bin" >> "$GITHUB_PATH"
+fi
+## End of dae/honk
 fi
 
 if ls $GITHUB_WORKSPACE/patches/0001-Revert-base-files-move-config_generate-to-preinit.patch 1> /dev/null 2>&1; then
